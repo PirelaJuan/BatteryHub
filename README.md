@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# Welcome
 
 ## Project info
 
-**URL**: 
+**URL**: https://gray-cliff-0f6200310.6.azurestaticapps.net/
 
 ## How can I edit this code?
 
@@ -53,9 +53,3 @@ This project is built with .
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
