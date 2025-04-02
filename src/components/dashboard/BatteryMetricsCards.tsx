@@ -21,6 +21,11 @@ export const BatteryMetricsCards = ({ data }: BatteryMetricsCardsProps) => {
     time: '' 
   };
 
+  // Function to format numbers to 2 decimal places
+  const formatPercentage = (value: number | null) => {
+    return value !== null ? value.toFixed(2) : 'N/A';
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <Card>
@@ -29,9 +34,9 @@ export const BatteryMetricsCards = ({ data }: BatteryMetricsCardsProps) => {
           <Battery className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{predictions.socPredicted ?? 'N/A'}%</div>
+          <div className="text-2xl font-bold">{formatPercentage(predictions.socPredicted)}%</div>
           <div className="text-sm text-muted-foreground">
-            Predicted in 12h: {predictions.socPredicted ?? 'N/A'}%
+            Predicted in 12h: {formatPercentage(predictions.socPredicted)}%
           </div>
         </CardContent>
       </Card>
@@ -42,14 +47,14 @@ export const BatteryMetricsCards = ({ data }: BatteryMetricsCardsProps) => {
           <Battery className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{predictions.sohPredicted ?? 'N/A'}%</div>
+          <div className="text-2xl font-bold">{formatPercentage(predictions.sohPredicted)}%</div>
           <div className="text-sm text-muted-foreground">
-            Predicted in 12h: {predictions.sohPredicted ?? 'N/A'}%
+            Predicted in 12h: {formatPercentage(predictions.sohPredicted)}%
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      {/* <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">AI Predictions</CardTitle>
           <Brain className="h-4 w-4 text-muted-foreground" />
@@ -59,7 +64,8 @@ export const BatteryMetricsCards = ({ data }: BatteryMetricsCardsProps) => {
             Next 12 hours forecast available
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
+
     </div>
   );
 };
