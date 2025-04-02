@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://gray-cliff-0f6200310.6.azurestaticapps.net/dashboard
+**URL**: https://gray-cliff-0f6200310.6.azurestaticapps.net/dashboard](https://gray-cliff-0f6200310.6.azurestaticapps.net/
 
 ## How can I edit this code?
 
