@@ -1,109 +1,63 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { BMSSettings } from "@/types/battery";
 
 export const BMSSettingsForm = () => {
   const { toast } = useToast();
-  const form = useForm<BMSSettings>({
-    defaultValues: {
-      maxVoltage: "4.2",
-      minVoltage: "3.0",
-      maxTemperature: "45",
-      maxChargeCurrent: "10",
-      maxDischargeCurrent: "20",
-    },
-  });
+  const [toggleState, setToggleState] = useState<boolean>(false);
 
-  const onSubmit = (data: BMSSettings) => {
-    console.log('BMS Settings:', data);
-    toast({
-      title: "Settings Updated",
-      description: "BMS settings have been successfully updated.",
-    });
+  const sendData = async () => {
+    // Convert toggle to 0 or 1
+    const value = toggleState ? 1 : 0;
+    
+    try {
+      // Replace this URL with your actual API endpoint or
+      // AWS SDK call that writes to your DynamoDB table.
+      const response = await fetch("/api/send-to-dynamodb", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ value }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to send data");
+      }
+      
+      console.log("Successfully sent value:", value);
+      toast({
+        title: "Data Sent",
+        description: "Your toggle value has been sent to AWS DynamoDB.",
+      });
+    } catch (error) {
+      console.error("Error sending data:", error);
+      toast({
+        title: "Error",
+        description: "There was an error sending your data.",
+      });
+    }
   };
 
   return (
     <Card className="col-span-1">
       <CardHeader>
-        <CardTitle>BMS Settings</CardTitle>
+        <CardTitle>Data Uploaded</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="maxVoltage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Voltage (V)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="minVoltage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Minimum Voltage (V)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="maxTemperature"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Temperature (°C)</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="maxChargeCurrent"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Charge Current (A)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="maxDischargeCurrent"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Discharge Current (A)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full">
-              Save BMS Settings
-            </Button>
-          </form>
-        </Form>
+      <CardContent className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <span>Off</span>
+          <Switch
+            checked={toggleState}
+            onCheckedChange={(checked) => setToggleState(checked)}
+          />
+          <span>On</span>
+        </div>
+        <Button onClick={sendData} className="w-full">
+          Send
+        </Button>
       </CardContent>
     </Card>
   );

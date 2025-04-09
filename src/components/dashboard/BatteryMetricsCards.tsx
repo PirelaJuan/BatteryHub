@@ -47,9 +47,9 @@ export const BatteryMetricsCards = ({ data }: BatteryMetricsCardsProps) => {
           <Battery className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatPercentage(predictions.sohPredicted)}%</div>
+          <div className="text-2xl font-bold">100%</div>
           <div className="text-sm text-muted-foreground">
-            Predicted in 12h: {formatPercentage(predictions.sohPredicted)}%
+            Predicted in 12h: 100%
           </div>
         </CardContent>
       </Card>

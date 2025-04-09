@@ -1,11 +1,12 @@
 
+import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { BatteryMetricsCards } from '@/components/dashboard/BatteryMetricsCards';
 import { BatteryChart } from '@/components/dashboard/BatteryChart';
-import { BMSSettingsForm } from '@/components/dashboard/BMSSettingsForm';
+import { ControlToggleCard } from '@/components/dashboard/ControlToggleCard';
 import { fetchBatteryData, generateFallbackData } from '@/utils/dynamoDBService';
 import { useToast } from "@/hooks/use-toast";
 
@@ -57,7 +58,7 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <BatteryChart data={data || []} />
-          <BMSSettingsForm />
+          <ControlToggleCard />
         </div>
       </div>
     </div>
