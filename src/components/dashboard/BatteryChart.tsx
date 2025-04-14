@@ -26,9 +26,7 @@ interface BatteryChartProps {
 export const BatteryChart = ({ data }: BatteryChartProps) => {
   const [visibleMetrics, setVisibleMetrics] = useState({
     soc: true,
-    soh: true,
     socPredicted: true,
-    sohPredicted: true,
   });
 
   const [date, setDate] = useState<DateRange | undefined>();
@@ -71,21 +69,19 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
 
   // Compute min/max Y values for chart zoom effect
   const minY =
-    Math.round(
-      Math.min(
-        ...filteredData.map((d) =>
-          Math.min(d.soc, d.soh, d.socPredicted, d.sohPredicted)
-        )
-      ) - 2
-    );
+  Math.round(
+    Math.min(
+      ...filteredData.map((d) =>
+        Math.min(d.soc ?? 0, d.socPredicted ?? 0)
+      )
+    ) - 2);
   const maxY =
-    Math.round(
-      Math.max(
-        ...filteredData.map((d) =>
-          Math.max(d.soc, d.soh, d.socPredicted, d.sohPredicted)
-        )
-      ) + 2
-  );
+  Math.round(
+    Math.max(
+      ...filteredData.map((d) =>
+        Math.max(d.soc ?? 0, d.socPredicted ?? 0)
+      )
+    ) + 2);
 
   // Ensure scrollIndex doesn't exceed array length
   const maxScrollIndex = Math.max(0, filteredData.length - zoomLevel);
@@ -97,7 +93,6 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
     clampedScrollIndex + zoomLevel
   );
 
-  // Attach a custom wheel event listener with { passive: false } so preventDefault works.
   useEffect(() => {
     const container = chartContainerRef.current;
     if (!container) return;
@@ -174,7 +169,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
                   }
                 />
                 <label className="text-sm capitalize">
-                  {metric.replace("Predicted", " Predicted")}
+                  {metric === "soc" ? "SOC" : "Predicted SOC"}
                 </label>
               </div>
             ))}
@@ -221,35 +216,12 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
                   dot={{ r: 2 }}
                 />
               )}
-              {visibleMetrics.soh && (
-                <Line
-                  type="monotone"
-                  dataKey="soh"
-                  stroke="#72cf41"
-                  name="Actual SOH (%)"
-                  strokeWidth={2}
-                  connectNulls={true}
-                  dot={{ r: 2 }}
-                />
-              )}
               {visibleMetrics.socPredicted && (
                 <Line
                   type="monotone"
                   dataKey="socPredicted"
                   stroke="#5b92dc"
                   name="Predicted SOC (%)"
-                  strokeWidth={1.5}
-                  strokeDasharray="3 3"
-                  connectNulls={true}
-                  dot={{ r: 2 }}
-                />
-              )}
-              {visibleMetrics.sohPredicted && (
-                <Line
-                  type="monotone"
-                  dataKey="sohPredicted"
-                  stroke="#a2df81"
-                  name="Predicted SOH (%)"
                   strokeWidth={1.5}
                   strokeDasharray="3 3"
                   connectNulls={true}

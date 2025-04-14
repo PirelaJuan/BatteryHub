@@ -1,9 +1,7 @@
 export interface BatteryData {
   time: string;
   soc: number | null;
-  soh: number | null;
   socPredicted: number | null;
-  sohPredicted: number | null;
 }
 
 export interface BMSSettings {
