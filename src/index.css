@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 217 32% 10%;
-    --foreground: 210 40% 98%;
+    --background: 210 40% 98%; /* Light background */
+    --foreground: 217 32% 10%; /* Dark text for contrast */
 
-    --card: 217 32% 15%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 217 32% 10%; /* Dark text for cards */
 
-    --popover: 217 32% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%; /* White popovers */
+    --popover-foreground: 217 32% 10%; /* Dark text for popovers */
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 217 91% 60%; /* Keep primary color */
+    --primary-foreground: 0 0% 100%; /* White text for primary */
 
-    --secondary: 217 32% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 16% 90%; /* Light gray for secondary elements */
+    --secondary-foreground: 217 32% 10%; /* Dark text for secondary */
 
-    --muted: 217 32% 20%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 210 16% 90%; /* Light muted background */
+    --muted-foreground: 217 32% 30%; /* Slightly darker text for muted */
 
-    --accent: 217 32% 20%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 217 91% 60%; /* Keep accent color */
+    --accent-foreground: 0 0% 100%; /* White text for accent */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 50%; /* Slightly lighter red for destructive */
+    --destructive-foreground: 0 0% 100%; /* White text for destructive */
 
-    --border: 217 32% 20%;
-    --input: 217 32% 20%;
-    --ring: 224 76% 48%;
+    --border: 210 16% 80%; /* Light border color */
+    --input: 210 16% 90%; /* Light input background */
+    --ring: 217 91% 60%; /* Keep ring color */
 
     --radius: 0.5rem;
   }

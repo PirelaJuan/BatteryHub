@@ -34,14 +34,13 @@ export const ControlToggleCard = () => {
       // Prepare the item to be saved
       const controlValue = isOn ? 1 : 0;
       const timestamp = new Date().toISOString();
-      const key1 = "key1"; // Replace with the actual value for the partition key
+      const key1 = "key1";
       console.log("Prepared item to save:", { key1, timestamp, controlValue });
 
-      // Create a command to put the item in the UserControl table
       const command = new PutCommand({
         TableName: "UserControl",
         Item: {
-          key1, // Add the required partition key
+          key1,
           timestamp,
           controlValue,
         },

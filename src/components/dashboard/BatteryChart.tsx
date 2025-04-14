@@ -71,17 +71,21 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
 
   // Compute min/max Y values for chart zoom effect
   const minY =
-    Math.min(
-      ...filteredData.map((d) =>
-        Math.min(d.soc, d.soh, d.socPredicted, d.sohPredicted)
-      )
-    ) - 2;
+    Math.round(
+      Math.min(
+        ...filteredData.map((d) =>
+          Math.min(d.soc, d.soh, d.socPredicted, d.sohPredicted)
+        )
+      ) - 2
+    );
   const maxY =
-    Math.max(
-      ...filteredData.map((d) =>
-        Math.max(d.soc, d.soh, d.socPredicted, d.sohPredicted)
-      )
-    ) + 2;
+    Math.round(
+      Math.max(
+        ...filteredData.map((d) =>
+          Math.max(d.soc, d.soh, d.socPredicted, d.sohPredicted)
+        )
+      ) + 2
+  );
 
   // Ensure scrollIndex doesn't exceed array length
   const maxScrollIndex = Math.max(0, filteredData.length - zoomLevel);
@@ -210,7 +214,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
                 <Line
                   type="monotone"
                   dataKey="soc"
-                  stroke="#60A5FA"
+                  stroke="#1b457e"
                   name="Actual SOC (%)"
                   strokeWidth={2}
                   connectNulls={true}
@@ -221,7 +225,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
                 <Line
                   type="monotone"
                   dataKey="soh"
-                  stroke="#34D399"
+                  stroke="#72cf41"
                   name="Actual SOH (%)"
                   strokeWidth={2}
                   connectNulls={true}
@@ -232,7 +236,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
                 <Line
                   type="monotone"
                   dataKey="socPredicted"
-                  stroke="#A5C8FA"
+                  stroke="#5b92dc"
                   name="Predicted SOC (%)"
                   strokeWidth={1.5}
                   strokeDasharray="3 3"
@@ -244,7 +248,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
                 <Line
                   type="monotone"
                   dataKey="sohPredicted"
-                  stroke="#8DE3B0"
+                  stroke="#a2df81"
                   name="Predicted SOH (%)"
                   strokeWidth={1.5}
                   strokeDasharray="3 3"

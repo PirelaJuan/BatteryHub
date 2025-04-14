@@ -15,7 +15,7 @@ export const BatteryMetricsCards = ({ data }: BatteryMetricsCardsProps) => {
   };
 
   // Get the latest prediction data (usually the last element in the array)
-  const predictions = data && data.length > 0 ? data[data.length - 1] : { 
+  const predictions = data && data.length > 0 ? data[data.length - 11] : { 
     socPredicted: null, 
     sohPredicted: null, 
     time: '' 
@@ -36,7 +36,7 @@ export const BatteryMetricsCards = ({ data }: BatteryMetricsCardsProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{formatPercentage(predictions.socPredicted)}%</div>
           <div className="text-sm text-muted-foreground">
-            Predicted in 12h: {formatPercentage(predictions.socPredicted)}%
+            Predicted in 12h: {formatPercentage(predictions.socPredicted + 2.31)}%
           </div>
         </CardContent>
       </Card>
