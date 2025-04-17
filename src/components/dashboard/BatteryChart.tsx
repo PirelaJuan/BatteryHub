@@ -1,23 +1,20 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BatteryData } from "@/types/battery";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, ZoomIn, ZoomOut } from "lucide-react";
-import { format, isWithinInterval, startOfDay, endOfDay, parseISO } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { format, differenceInDays, isWithinInterval, startOfDay, endOfDay, parseISO, isValid } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface BatteryChartProps {
   data: BatteryData[];
@@ -26,86 +23,110 @@ interface BatteryChartProps {
 export const BatteryChart = ({ data }: BatteryChartProps) => {
   const [visibleMetrics, setVisibleMetrics] = useState({
     soc: true,
+    soh: true,
     socPredicted: true,
+    sohPredicted: true,
   });
 
   const [date, setDate] = useState<DateRange | undefined>();
-  const [zoomLevel, setZoomLevel] = useState(data.length); // start by showing all data
-  const [scrollIndex, setScrollIndex] = useState(0); // start at the beginning
-
-  // Ref to the container that holds the chart.
-  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [swapAxes, setSwapAxes] = useState(false);
+  const [scrollIndex, setScrollIndex] = useState(0);
+  const [maxScrollIndex, setMaxScrollIndex] = useState(0);
+  const [clampedScrollIndex, setClampedScrollIndex] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(50); // Default zoom level (50 data points visible)
+  const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   const toggleMetric = (metric: keyof typeof visibleMetrics) => {
-    setVisibleMetrics((prev) => ({
+    setVisibleMetrics(prev => ({
       ...prev,
-      [metric]: !prev[metric],
+      [metric]: !prev[metric]
     }));
   };
 
   const filteredData = useMemo(() => {
     if (!data.length) return [];
-
+    
     let processedData = [...data];
+    
     if (date?.from) {
       const from = startOfDay(date.from);
       const to = date.to ? endOfDay(date.to) : endOfDay(date.from);
-      processedData = data.filter((item) => {
+      const daysDifference = differenceInDays(to, from);
+
+      processedData = data.filter(item => {
         try {
-          const itemDate = parseISO(item.time);
-          return isWithinInterval(itemDate, { start: from, end: to });
+          const itemDate = new Date(item.time); // Use new Date() for parsing
+          return isValid(itemDate) && isWithinInterval(itemDate, { start: from, end: to });
         } catch (e) {
           console.error("Invalid date format:", item.time, e);
           return false;
         }
       });
+
+      processedData = processedData.map(item => {
+        try {
+          const itemDate = new Date(item.time); // Use new Date() for parsing
+          if (!isValid(itemDate)) throw new Error("Invalid date");
+
+          let formattedTime;
+          if (daysDifference === 0) {
+            formattedTime = format(itemDate, 'HH:mm');
+          } else if (daysDifference <= 7) {
+            formattedTime = format(itemDate, 'HH:mm');
+          } else if (daysDifference <= 31) {
+            formattedTime = format(itemDate, 'dd');
+          } else {
+            formattedTime = format(itemDate, 'MMM');
+          }
+
+          return {
+            ...item,
+            displayTime: formattedTime,
+          };
+        } catch (e) {
+          console.error("Error formatting date:", item.time, e);
+          return {
+            ...item,
+            displayTime: item.time,
+          };
+        }
+      });
+    } else {
+      processedData = processedData.map(item => {
+        try {
+          const itemDate = new Date(item.time); // Use new Date() for parsing
+          if (!isValid(itemDate)) throw new Error("Invalid date");
+
+          return {
+            ...item,
+            displayTime: item.time.includes('T') 
+              ? format(itemDate, 'HH:mm') 
+              : item.time,
+          };
+        } catch (e) {
+          console.error("Error parsing date:", item.time, e);
+          return {
+            ...item,
+            displayTime: item.time,
+          };
+        }
+      });
     }
 
-    return processedData.map((item) => ({
-      ...item,
-      displayTime: format(parseISO(item.time), "HH:mm"),
-    }));
+    return processedData;
   }, [data, date]);
-
-  // Compute min/max Y values for chart zoom effect
-  const minY =
-  Math.round(
-    Math.min(
-      ...filteredData.map((d) =>
-        Math.min(d.soc ?? 0, d.socPredicted ?? 0)
-      )
-    ) - 2);
-  const maxY =
-  Math.round(
-    Math.max(
-      ...filteredData.map((d) =>
-        Math.max(d.soc ?? 0, d.socPredicted ?? 0)
-      )
-    ) + 2);
-
-  // Ensure scrollIndex doesn't exceed array length
-  const maxScrollIndex = Math.max(0, filteredData.length - zoomLevel);
-  const clampedScrollIndex = Math.min(scrollIndex, maxScrollIndex);
-
-  // Slice data based on scroll position and zoom level
-  const visibleData = filteredData.slice(
-    clampedScrollIndex,
-    clampedScrollIndex + zoomLevel
-  );
 
   useEffect(() => {
     const container = chartContainerRef.current;
     if (!container) return;
 
     const handleWheelEvent = (event: WheelEvent) => {
-      event.preventDefault(); // Prevent page zoom/scroll
-      event.stopPropagation(); // Stop the event from bubbling up
+      event.preventDefault();
+      event.stopPropagation();
       if (event.deltaY < 0) {
-        // Zoom in: decrease zoom level without going below a minimum threshold.
-        setZoomLevel((prev) => Math.max(10, prev - 30));
+        setZoomLevel((prev) => Math.max(10, prev - 10)); // Zoom in
       } else if (event.deltaY > 0) {
-        // Zoom out: increase zoom level, not to exceed the available data length.
-        setZoomLevel((prev) => Math.min(data.length, prev + 30));
+        setZoomLevel((prev) => Math.min(data.length, prev + 10)); // Zoom out
       }
     };
 
@@ -115,124 +136,180 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
     };
   }, [data.length]);
 
+  useEffect(() => {
+    const maxIndex = Math.max(0, filteredData.length - zoomLevel);
+    setMaxScrollIndex(maxIndex);
+    setClampedScrollIndex(Math.min(scrollIndex, maxIndex));
+  }, [filteredData, scrollIndex, zoomLevel]);
+
+  const paginatedData = useMemo(() => {
+    return filteredData.slice(clampedScrollIndex, clampedScrollIndex + zoomLevel);
+  }, [filteredData, clampedScrollIndex, zoomLevel]);
+
   return (
     <Card className="col-span-1">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Battery Metrics Over Time</CardTitle>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date?.from ? (
-                  date.to ? (
-                    <>
-                      {format(date.from, "LLL dd, y")} -{" "}
-                      {format(date.to, "LLL dd, y")}
-                    </>
-                  ) : (
-                    format(date.from, "LLL dd, y")
-                  )
-                ) : (
-                  <span>Pick a date range</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setZoomLevel((prev) => Math.max(10, prev - 10))}
+              className="px-2 py-1 bg-blue-500 text-white rounded"
+              aria-label="Zoom In"
+            >
+              +
+            </button>
+            <button
+              onClick={() => setZoomLevel((prev) => Math.min(data.length, prev + 10))}
+              className="px-2 py-1 bg-blue-500 text-white rounded"
+              aria-label="Zoom Out"
+            >
+              -
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-4 mt-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="soc" 
+              checked={visibleMetrics.soc}
+              onCheckedChange={() => toggleMetric('soc')}
+            />
+            <label htmlFor="soc" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Actual SOC (%)
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="soh" 
+              checked={visibleMetrics.soh}
+              onCheckedChange={() => toggleMetric('soh')}
+            />
+            <label htmlFor="soh" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Actual SOH (%)
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="socPredicted" 
+              checked={visibleMetrics.socPredicted}
+              onCheckedChange={() => toggleMetric('socPredicted')}
+            />
+            <label htmlFor="socPredicted" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Predicted SOC (%)
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="sohPredicted" 
+              checked={visibleMetrics.sohPredicted}
+              onCheckedChange={() => toggleMetric('sohPredicted')}
+            />
+            <label htmlFor="sohPredicted" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Predicted SOH (%)
+            </label>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="h-[400px]">
-        {/* Zoom Controls */}
-        <div className="flex justify-between mb-2">
-          <div className="flex space-x-4">
-            {Object.keys(visibleMetrics).map((metric) => (
-              <div key={metric} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={
-                    visibleMetrics[metric as keyof typeof visibleMetrics]
-                  }
-                  onCheckedChange={() =>
-                    toggleMetric(metric as keyof typeof visibleMetrics)
-                  }
-                />
-                <label className="text-sm capitalize">
-                  {metric === "soc" ? "SOC" : "Predicted SOC"}
-                </label>
-              </div>
-            ))}
-          </div>
-          <div className="flex space-x-2">
-            <Button
-              size="sm"
-              onClick={() => setZoomLevel((prev) => Math.max(10, prev - 30))}
-            >
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              onClick={() =>
-                setZoomLevel((prev) => Math.min(data.length, prev + 30))
-              }
-            >
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Chart Container with attached wheel listener */}
-        <div ref={chartContainerRef} className="w-full">
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart
-              data={visibleData}
-              margin={{ left: 20, right: 20, top: 10, bottom: 10 }}
+      <CardContent className="h-[300px]" ref={chartContainerRef}>
+        <ResponsiveContainer width="100%" height="100%">
+          {swapAxes ? (
+            <LineChart 
+              data={paginatedData}
+              layout="vertical"
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="displayTime" />
-              <YAxis domain={[minY, maxY]} />
+              <XAxis type="number" domain={[0, 100]} />
+              <YAxis dataKey="displayTime" type="category" />
               <Tooltip />
               <Legend />
-
               {visibleMetrics.soc && (
-                <Line
-                  type="monotone"
-                  dataKey="soc"
-                  stroke="#1b457e"
-                  name="Actual SOC (%)"
+                <Line 
+                  type="monotone" 
+                  dataKey="soc" 
+                  stroke="#60A5FA" 
+                  name="SOC (%)" 
                   strokeWidth={2}
-                  connectNulls={true}
-                  dot={{ r: 2 }}
+                />
+              )}
+              {visibleMetrics.soh && (
+                <Line 
+                  type="monotone" 
+                  dataKey="soh" 
+                  stroke="#34D399" 
+                  name="SOH (%)" 
+                  strokeWidth={2}
                 />
               )}
               {visibleMetrics.socPredicted && (
-                <Line
-                  type="monotone"
-                  dataKey="socPredicted"
-                  stroke="#5b92dc"
-                  name="Predicted SOC (%)"
-                  strokeWidth={1.5}
-                  strokeDasharray="3 3"
-                  connectNulls={true}
-                  dot={{ r: 2 }}
+                <Line 
+                  type="monotone" 
+                  dataKey="socPredicted" 
+                  stroke="#FFDEE2" 
+                  name="Predicted SOC (%)" 
+                  strokeWidth={2}
+                />
+              )}
+              {visibleMetrics.sohPredicted && (
+                <Line 
+                  type="monotone" 
+                  dataKey="sohPredicted" 
+                  stroke="#DC2626" 
+                  name="Predicted SOH (%)" 
+                  strokeWidth={2}
                 />
               )}
             </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Conditionally Render the Scrollbar Only if There's Data to Scroll */}
+          ) : (
+            <LineChart data={paginatedData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="displayTime" />
+              <YAxis domain={[0, 100]} />
+              <Tooltip />
+              <Legend />
+              {visibleMetrics.soc && (
+                <Line 
+                  type="monotone" 
+                  dataKey="soc" 
+                  stroke="#60A5FA" 
+                  name="Actual SOC (%)" 
+                  strokeWidth={2}
+                  connectNulls={true}
+                />
+              )}
+              {visibleMetrics.soh && (
+                <Line 
+                  type="monotone" 
+                  dataKey="soh" 
+                  stroke="#34D399" 
+                  name="Actual SOH (%)" 
+                  strokeWidth={2}
+                  connectNulls={true}
+                />
+              )}
+              {visibleMetrics.socPredicted && (
+                <Line 
+                  type="monotone" 
+                  dataKey="socPredicted" 
+                  stroke="#FFDEE2" 
+                  name="Predicted SOC (%)" 
+                  strokeWidth={2}
+                  connectNulls={true}
+                />
+              )}
+              {visibleMetrics.sohPredicted && (
+                <Line 
+                  type="monotone" 
+                  dataKey="sohPredicted" 
+                  stroke="#DC2626" 
+                  name="Predicted SOH (%)" 
+                  strokeWidth={2}
+                  connectNulls={true}
+                />
+              )}
+            </LineChart>
+          )}
+        </ResponsiveContainer>
         {maxScrollIndex > 0 && (
           <input
             type="range"
