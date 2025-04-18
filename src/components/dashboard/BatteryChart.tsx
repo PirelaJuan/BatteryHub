@@ -1,20 +1,55 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { BatteryData } from "@/types/battery";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
-import { format, differenceInDays, isWithinInterval, startOfDay, endOfDay, parseISO, isValid } from "date-fns";
+import { CalendarIcon, ZoomIn, ZoomOut } from "lucide-react";
+import { format, isWithinInterval, startOfDay, endOfDay, setHours, setMinutes } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Helper function to parse custom timestamp format
+function parseCustomTimestamp(timestamp: string): Date {
+  try {
+    const parts = timestamp.split(" ");
+    if (parts.length === 6) {
+      const monthMap: { [key: string]: string } = {
+        Jan: "01",
+        Feb: "02",
+        Mar: "03",
+        Apr: "04",
+        May: "05",
+        Jun: "06",
+        Jul: "07",
+        Aug: "08",
+        Sep: "09",
+        Oct: "10",
+        Nov: "11",
+        Dec: "12",
+      };
+      const month = monthMap[parts[1]];
+      const day = parts[2].padStart(2, "0");
+      const time = parts[3];
+      const year = parts[5];
+      return new Date(`${year}-${month}-${day}T${time}`);
+    }
+    throw new Error("Invalid timestamp format");
+  } catch (error) {
+    console.error("Error parsing timestamp:", timestamp, error);
+    return new Date(); // Fallback to current date
+  }
+}
 
 interface BatteryChartProps {
   data: BatteryData[];
@@ -23,98 +58,87 @@ interface BatteryChartProps {
 export const BatteryChart = ({ data }: BatteryChartProps) => {
   const [visibleMetrics, setVisibleMetrics] = useState({
     soc: true,
-    soh: true,
     socPredicted: true,
-    sohPredicted: true,
   });
 
-  const [date, setDate] = useState<DateRange | undefined>();
-  const [swapAxes, setSwapAxes] = useState(false);
-  const [scrollIndex, setScrollIndex] = useState(0);
-  const [maxScrollIndex, setMaxScrollIndex] = useState(0);
-  const [clampedScrollIndex, setClampedScrollIndex] = useState(0);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [timeRange, setTimeRange] = useState({ start: "00:00", end: "23:59" });
   const [zoomLevel, setZoomLevel] = useState(50); // Default zoom level (50 data points visible)
+  const [scrollIndex, setScrollIndex] = useState(0); // Start at the beginning
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   const toggleMetric = (metric: keyof typeof visibleMetrics) => {
-    setVisibleMetrics(prev => ({
+    setVisibleMetrics((prev) => ({
       ...prev,
-      [metric]: !prev[metric]
+      [metric]: !prev[metric],
     }));
   };
 
   const filteredData = useMemo(() => {
     if (!data.length) return [];
-    
-    let processedData = [...data];
-    
-    if (date?.from) {
-      const from = startOfDay(date.from);
-      const to = date.to ? endOfDay(date.to) : endOfDay(date.from);
-      const daysDifference = differenceInDays(to, from);
 
-      processedData = data.filter(item => {
+    let processedData = [...data];
+
+    // Filter by date range
+    if (dateRange?.from) {
+      const from = startOfDay(dateRange.from);
+      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+
+      processedData = data.filter((item) => {
         try {
-          const itemDate = new Date(item.time); // Use new Date() for parsing
-          return isValid(itemDate) && isWithinInterval(itemDate, { start: from, end: to });
+          const itemDate = parseCustomTimestamp(item.time);
+          return isWithinInterval(itemDate, { start: from, end: to });
         } catch (e) {
           console.error("Invalid date format:", item.time, e);
           return false;
         }
       });
+    }
 
-      processedData = processedData.map(item => {
+    // Filter by time range
+    if (timeRange.start && timeRange.end) {
+      const [startHours, startMinutes] = timeRange.start.split(":").map(Number);
+      const [endHours, endMinutes] = timeRange.end.split(":").map(Number);
+
+      processedData = processedData.filter((item) => {
         try {
-          const itemDate = new Date(item.time); // Use new Date() for parsing
-          if (!isValid(itemDate)) throw new Error("Invalid date");
+          const itemDate = parseCustomTimestamp(item.time);
+          const itemTime = setHours(setMinutes(new Date(itemDate), 0), 0);
+          const startTime = setHours(setMinutes(new Date(itemDate), startMinutes), startHours);
+          const endTime = setHours(setMinutes(new Date(itemDate), endMinutes), endHours);
 
-          let formattedTime;
-          if (daysDifference === 0) {
-            formattedTime = format(itemDate, 'HH:mm');
-          } else if (daysDifference <= 7) {
-            formattedTime = format(itemDate, 'HH:mm');
-          } else if (daysDifference <= 31) {
-            formattedTime = format(itemDate, 'dd');
-          } else {
-            formattedTime = format(itemDate, 'MMM');
-          }
-
-          return {
-            ...item,
-            displayTime: formattedTime,
-          };
+          return isWithinInterval(itemTime, { start: startTime, end: endTime });
         } catch (e) {
-          console.error("Error formatting date:", item.time, e);
-          return {
-            ...item,
-            displayTime: item.time,
-          };
-        }
-      });
-    } else {
-      processedData = processedData.map(item => {
-        try {
-          const itemDate = new Date(item.time); // Use new Date() for parsing
-          if (!isValid(itemDate)) throw new Error("Invalid date");
-
-          return {
-            ...item,
-            displayTime: item.time.includes('T') 
-              ? format(itemDate, 'HH:mm') 
-              : item.time,
-          };
-        } catch (e) {
-          console.error("Error parsing date:", item.time, e);
-          return {
-            ...item,
-            displayTime: item.time,
-          };
+          console.error("Invalid time format:", item.time, e);
+          return false;
         }
       });
     }
 
-    return processedData;
-  }, [data, date]);
+    return processedData.map((item) => {
+      let displayTime;
+      try {
+        const itemDate = parseCustomTimestamp(item.time);
+        displayTime = format(itemDate, "HH:mm");
+      } catch (e) {
+        console.error("Error formatting date:", item.time, e);
+        displayTime = item.time;
+      }
+
+      return {
+        ...item,
+        displayTime,
+      };
+    });
+  }, [data, dateRange, timeRange]);
+
+  const maxScrollIndex = Math.max(0, filteredData.length - zoomLevel);
+  const clampedScrollIndex = Math.min(scrollIndex, maxScrollIndex);
+
+  const visibleData = filteredData.slice(
+    clampedScrollIndex,
+    clampedScrollIndex + zoomLevel
+  );
 
   useEffect(() => {
     const container = chartContainerRef.current;
@@ -136,179 +160,110 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
     };
   }, [data.length]);
 
-  useEffect(() => {
-    const maxIndex = Math.max(0, filteredData.length - zoomLevel);
-    setMaxScrollIndex(maxIndex);
-    setClampedScrollIndex(Math.min(scrollIndex, maxIndex));
-  }, [filteredData, scrollIndex, zoomLevel]);
-
-  const paginatedData = useMemo(() => {
-    return filteredData.slice(clampedScrollIndex, clampedScrollIndex + zoomLevel);
-  }, [filteredData, clampedScrollIndex, zoomLevel]);
-
   return (
     <Card className="col-span-1">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Battery Metrics Over Time</CardTitle>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setZoomLevel((prev) => Math.max(10, prev - 10))}
-              className="px-2 py-1 bg-blue-500 text-white rounded"
-              aria-label="Zoom In"
-            >
-              +
-            </button>
-            <button
-              onClick={() => setZoomLevel((prev) => Math.min(data.length, prev + 10))}
-              className="px-2 py-1 bg-blue-500 text-white rounded"
-              aria-label="Zoom Out"
-            >
-              -
-            </button>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="justify-start text-left font-normal"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "LLL dd, y")} -{" "}
+                      {format(dateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Pick a date range</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
+
         <div className="flex flex-wrap gap-4 mt-2">
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="soc" 
-              checked={visibleMetrics.soc}
-              onCheckedChange={() => toggleMetric('soc')}
+            <label className="text-sm font-medium">Start Time:</label>
+            <input
+              type="time"
+              value={timeRange.start}
+              onChange={(e) => setTimeRange((prev) => ({ ...prev, start: e.target.value }))}
+              className="border rounded px-2 py-1 text-sm"
             />
-            <label htmlFor="soc" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Actual SOC (%)
-            </label>
           </div>
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="soh" 
-              checked={visibleMetrics.soh}
-              onCheckedChange={() => toggleMetric('soh')}
+            <label className="text-sm font-medium">End Time:</label>
+            <input
+              type="time"
+              value={timeRange.end}
+              onChange={(e) => setTimeRange((prev) => ({ ...prev, end: e.target.value }))}
+              className="border rounded px-2 py-1 text-sm"
             />
-            <label htmlFor="soh" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Actual SOH (%)
-            </label>
           </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="socPredicted" 
-              checked={visibleMetrics.socPredicted}
-              onCheckedChange={() => toggleMetric('socPredicted')}
-            />
-            <label htmlFor="socPredicted" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Predicted SOC (%)
-            </label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="sohPredicted" 
-              checked={visibleMetrics.sohPredicted}
-              onCheckedChange={() => toggleMetric('sohPredicted')}
-            />
-            <label htmlFor="sohPredicted" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Predicted SOH (%)
-            </label>
-          </div>
+        </div>
+
+        <div className="flex justify-between mt-4">
+          <Button
+            size="sm"
+            onClick={() => setZoomLevel((prev) => Math.max(10, prev - 10))}
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setZoomLevel((prev) => Math.min(data.length, prev + 10))}
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="h-[300px]" ref={chartContainerRef}>
         <ResponsiveContainer width="100%" height="100%">
-          {swapAxes ? (
-            <LineChart 
-              data={paginatedData}
-              layout="vertical"
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" domain={[0, 100]} />
-              <YAxis dataKey="displayTime" type="category" />
-              <Tooltip />
-              <Legend />
-              {visibleMetrics.soc && (
-                <Line 
-                  type="monotone" 
-                  dataKey="soc" 
-                  stroke="#60A5FA" 
-                  name="SOC (%)" 
-                  strokeWidth={2}
-                />
-              )}
-              {visibleMetrics.soh && (
-                <Line 
-                  type="monotone" 
-                  dataKey="soh" 
-                  stroke="#34D399" 
-                  name="SOH (%)" 
-                  strokeWidth={2}
-                />
-              )}
-              {visibleMetrics.socPredicted && (
-                <Line 
-                  type="monotone" 
-                  dataKey="socPredicted" 
-                  stroke="#FFDEE2" 
-                  name="Predicted SOC (%)" 
-                  strokeWidth={2}
-                />
-              )}
-              {visibleMetrics.sohPredicted && (
-                <Line 
-                  type="monotone" 
-                  dataKey="sohPredicted" 
-                  stroke="#DC2626" 
-                  name="Predicted SOH (%)" 
-                  strokeWidth={2}
-                />
-              )}
-            </LineChart>
-          ) : (
-            <LineChart data={paginatedData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="displayTime" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip />
-              <Legend />
-              {visibleMetrics.soc && (
-                <Line 
-                  type="monotone" 
-                  dataKey="soc" 
-                  stroke="#60A5FA" 
-                  name="Actual SOC (%)" 
-                  strokeWidth={2}
-                  connectNulls={true}
-                />
-              )}
-              {visibleMetrics.soh && (
-                <Line 
-                  type="monotone" 
-                  dataKey="soh" 
-                  stroke="#34D399" 
-                  name="Actual SOH (%)" 
-                  strokeWidth={2}
-                  connectNulls={true}
-                />
-              )}
-              {visibleMetrics.socPredicted && (
-                <Line 
-                  type="monotone" 
-                  dataKey="socPredicted" 
-                  stroke="#FFDEE2" 
-                  name="Predicted SOC (%)" 
-                  strokeWidth={2}
-                  connectNulls={true}
-                />
-              )}
-              {visibleMetrics.sohPredicted && (
-                <Line 
-                  type="monotone" 
-                  dataKey="sohPredicted" 
-                  stroke="#DC2626" 
-                  name="Predicted SOH (%)" 
-                  strokeWidth={2}
-                  connectNulls={true}
-                />
-              )}
-            </LineChart>
-          )}
+          <LineChart data={visibleData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="displayTime" />
+            <YAxis domain={[0, 100]} />
+            <Tooltip />
+            <Legend />
+            {visibleMetrics.soc && (
+              <Line
+                type="monotone"
+                dataKey="soc"
+                stroke="#247cdf"
+                name="Actual SOC (%)"
+                strokeWidth={2}
+                connectNulls={true}
+              />
+            )}
+            {visibleMetrics.socPredicted && (
+              <Line
+                type="monotone"
+                dataKey="socPredicted"
+                stroke="#75dfc2"
+                name="Predicted SOC (%)"
+                strokeWidth={2}
+                connectNulls={true}
+              />
+            )}
+          </LineChart>
         </ResponsiveContainer>
         {maxScrollIndex > 0 && (
           <input
