@@ -1,8 +1,8 @@
 export const AWS_CONFIG = {
-  region: import.meta.env.AWS_REGION ,
+  region: 'us-east-1' ,
   credentials: {
-    accessKeyId: import.meta.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.AWS_SECRET_ACCESS_KEY                 
+    accessKeyId: "AKIAWOAEY3PXHCTVAJKK",
+    secretAccessKey: "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"
   },
-  tableName: import.meta.env.AWS_TABLE_NAME 
+  tableName: "Predictions_1"
 };
