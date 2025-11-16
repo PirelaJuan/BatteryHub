@@ -1,41 +1,45 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 217 32% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 217 32% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 217 32% 10%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 16% 90%;
-    --secondary-foreground: 217 32% 10%;
-    --muted: 210 16% 90%;
-    --muted-foreground: 217 32% 30%;
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 16% 80%;
-    --input: 210 16% 90%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
-  }
-}
+     --background: 210 40% 98%; /* Light background */
+    --foreground: 217 32% 10%; /* Dark text for contrast */
 
-@layer utilities {
-  .border-border {
-    border-color: hsl(var(--border));
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 217 32% 10%; /* Dark text for cards */
+
+    --popover: 0 0% 100%; /* White popovers */
+    --popover-foreground: 217 32% 10%; /* Dark text for popovers */
+
+    --primary: 217 91% 60%; /* Keep primary color */
+    --primary-foreground: 0 0% 100%; /* White text for primary */
+
+    --secondary: 210 16% 90%; /* Light gray for secondary elements */
+    --secondary-foreground: 217 32% 10%; /* Dark text for secondary */
+
+    --muted: 210 16% 90%; /* Light muted background */
+    --muted-foreground: 217 32% 30%; /* Slightly darker text for muted */
+
+    --accent: 217 91% 60%; /* Keep accent color */
+    --accent-foreground: 0 0% 100%; /* White text for accent */
+
+    --destructive: 0 62.8% 50%; /* Slightly lighter red for destructive */
+    --destructive-foreground: 0 0% 100%; /* White text for destructive */
+
+    --border: 210 16% 80%; /* Light border color */
+    --input: 210 16% 90%; /* Light input background */
+    --ring: 217 91% 60%; /* Keep ring color */
+
+    --radius: 0.5rem;
   }
 }
 
 @layer base {
   * {
-    
+     border-color: hsl(var(--border));
   }
-
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
