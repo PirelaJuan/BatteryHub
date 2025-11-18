@@ -10,21 +10,43 @@ import { RawBatteryChart } from '@/components/dashboard/RawBatteryChart';
 import { BatteryStatusCards } from '@/components/dashboard/BatteryStatusCards';
 import { ControlToggleCard } from '@/components/dashboard/ControlToggleCard';
 import { 
-  fetchBatteryData, 
-  fetchRawBatteryData, 
   generateFallbackData, 
   generateRawFallbackData 
 } from '@/utils/dynamoDBService';
 import { useToast } from "@/hooks/use-toast";
+import type { BatteryData } from '@/types/battery';
+import type { RawBatteryData } from '@/utils/dynamoDBService';
+
+const fetchBatteryDataClient = async (): Promise<BatteryData[]> => {
+  const res = await fetch("/api/battery");
+  console.log("Fetch response from /api/battery:", res);
+  if (!res.ok) {
+    throw new Error("Failed to fetch battery data");
+  }
+  const body = await res.json();
+  return body as BatteryData[];
+};
+
+const fetchRawBatteryDataClient = async (): Promise<RawBatteryData[]> => {
+  const res = await fetch("/api/raw-battery");
+  if (!res.ok) {
+    throw new Error("Failed to fetch raw battery data");
+  }
+  const body = await res.json();
+  return body as RawBatteryData[];
+};
+
 
 const Dashboard = () => {
   const { logout } = useAuth();
   const { toast } = useToast();
-
+  const dataRaw = fetchBatteryDataClient();
+  console.log("dataRaw Hola", dataRaw);
   // Query for primary battery data from Predictions_1 table
   const { data: batteryMetrics, isLoading: isLoadingMetrics, isError: isErrorMetrics } = useQuery({
+   
     queryKey: ['batteryData'],
-    queryFn: fetchBatteryData,
+    queryFn: fetchBatteryDataClient,
     placeholderData: generateFallbackData(24),
     meta: {
       onError: (error: Error) => {
@@ -45,7 +67,7 @@ const Dashboard = () => {
     isError: isErrorRawData 
   } = useQuery({
     queryKey: ['rawBatteryData'],
-    queryFn: fetchRawBatteryData,
+    queryFn: fetchRawBatteryDataClient,
     placeholderData: generateRawFallbackData(24),
     meta: {
       onError: (error: Error) => {

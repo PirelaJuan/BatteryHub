@@ -33,12 +33,12 @@ export const ControlToggleCard = () => {
       }
 
       const client = new DynamoDBClient({
-        region: AWS_REGION,
-        credentials: {
-          accessKeyId: AWS_ACCESS_KEY_ID,
-          secretAccessKey: AWS_SECRET_ACCESS_KEY,
-        },
-      });
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      }
+    });
 
       const docClient = DynamoDBDocumentClient.from(client);
       console.log("DynamoDB client initialized successfully.");

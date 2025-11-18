@@ -20,6 +20,7 @@ import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Helper function to parse custom timestamp format
+
 function parseCustomTimestamp(timestamp: string): Date {
   try {
     const parts = timestamp.split(" ");
@@ -42,7 +43,7 @@ function parseCustomTimestamp(timestamp: string): Date {
       const day = parts[2].padStart(2, "0");
       const time = parts[3];
       const year = parts[5];
-      return new Date(`${year}-${month}-${day}T${time}`);
+      return new Date(`${year}-${month}-${day} ${time}`);
     }
     throw new Error("Invalid timestamp format");
   } catch (error) {

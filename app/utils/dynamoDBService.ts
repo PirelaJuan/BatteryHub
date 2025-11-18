@@ -1,28 +1,15 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand} from "@aws-sdk/lib-dynamodb";
+
+
+import { ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { BatteryData } from "@/types/battery";
+import { dbClient } from "../../config";
 import { format, parseISO, subHours, addHours, parse } from "date-fns";
 
-const AWS_REGION = process.env.AWS_REGION;
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const PREDICTIONS_TABLE = process.env.DYNAMODB_PREDICTIONS_TABLE
-const RAW_DATA_TABLE = process.env.DYNAMODB_RAW_DATA_TABLE;
 
-
-
-const client = new DynamoDBClient({
-  region: AWS_REGION,
-  credentials: {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  },
-});
-
-const docClient = DynamoDBDocumentClient.from(client);
 
 // Table names for different data sources
-
+const PREDICTIONS_TABLE = "Predictions_1";
+const RAW_DATA_TABLE = "Raw_Data_SeniorDesign";
 
 // Define interfaces for the raw data structure
 export interface RawBatteryData {
@@ -54,7 +41,7 @@ function parseCustomTimestamp(timestamp: string): Date {
       const date = parts[3];
       const time = parts[4];
       const tz = parts[5];
-      const year = parts[6].replace('.', '');
+      const year = parts[6];
       
       const monthMap: {[key: string]: string} = {
         'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
@@ -77,18 +64,21 @@ function parseCustomTimestamp(timestamp: string): Date {
 export async function fetchBatteryData(): Promise<BatteryData[]> {
   try {
     console.log(`Fetching battery metrics from ${PREDICTIONS_TABLE} table`);
-    
+   
     // Using Scan operation to get all items from the Predictions_1 table
     const command = new ScanCommand({
       TableName: PREDICTIONS_TABLE,
     });
 
-    const response = await docClient.send(command);
+    const response = await dbClient.send(command);
+    
     
     if (!response.Items || response.Items.length === 0) {
       console.warn("No data returned from DynamoDB");
       return [];
     }
+
+    console.log( response )
 
     // Map DynamoDB items to BatteryData format using the correct field names
     const batteryData: BatteryData[] = response.Items.map(item => ({
@@ -126,7 +116,13 @@ export async function fetchRawBatteryData(): Promise<RawBatteryData[]> {
       TableName: RAW_DATA_TABLE,
     });
 
-    const response = await docClient.send(command);
+    console.log("[fetchBatteryData] Command built:", {
+    table: PREDICTIONS_TABLE,
+  });
+
+    const response = await dbClient.send(command);
+
+    console.log("[fetchBatteryData] Scan response metadata:", response.$metadata);
     
     if (!response.Items || response.Items.length === 0) {
       console.warn("No raw data returned from DynamoDB");
