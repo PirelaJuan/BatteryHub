@@ -9,6 +9,7 @@ export async function GET() {
     console.log("API /api/battery: fetched battery data", body); 
 
     console.log("API /api/battery: fetched battery data NextResponse", NextResponse.json(body)); 
+    
     console.log("API /api/battery: fetched battery data as BatteryData", body as BatteryData[]);
 
     if (!body || body.length === 0) {

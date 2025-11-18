@@ -41,7 +41,7 @@ function parseCustomTimestamp(timestamp: string): Date {
       const date = parts[3];
       const time = parts[4];
       const tz = parts[5];
-      const year = parts[6];
+      const year = parts[6].replace('.', '');
       
       const monthMap: {[key: string]: string} = {
         'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
