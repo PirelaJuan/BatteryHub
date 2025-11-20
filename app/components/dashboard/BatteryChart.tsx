@@ -23,8 +23,54 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 function parseCustomTimestamp(timestamp: string): Date {
   try {
+    
     const parts = timestamp.split(" ");
+
+    console.log("Parsing timestamp in BatteryChart: HEREEEEEEEEEEEEEEEEEE", parts);
     if (parts.length === 6) {
+      console.log("INSIDDE THE IF STATEMENT");
+      const monthMap: { [key: string]: string } = {
+        Jan: "01",
+        Feb: "02",
+        Mar: "03",
+        Apr: "04",
+        May: "05",  
+        Jun: "06",
+        Jul: "07",
+        Aug: "08",
+        Sep: "09",
+        Oct: "10",
+        Nov: "11",
+        Dec: "12",
+      };
+      const month = monthMap[parts[1]];
+      const day = parts[2].padStart(2, "0");
+      const time = parts[3];
+      const year = parts[5];
+      return new Date(`${year}-${month}-${day}T${time}`);
+    }
+    throw new Error("Invalid timestamp format");
+  } catch (error) {
+    console.error("Error parsing timestamp:", timestamp, error);
+    return new Date(); // Fallback to current date
+  }
+}
+
+/*
+function parseCustomTimestamp(timestamp: string): Date {
+  try {
+    // 1️⃣ If it's already ISO-like but uses a space instead of "T"
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timestamp)) {
+      const iso = timestamp.replace(" ", "T");
+      console.log("Inside If Timestamp with space instead of T:", iso);
+
+      return new Date(iso);
+    }
+    
+
+    // 2️⃣ If it's the verbose BMS-style timestamp
+    const parts = timestamp.split(" ");
+    if (parts.length >= 6) {
       const monthMap: { [key: string]: string } = {
         Jan: "01",
         Feb: "02",
@@ -39,18 +85,27 @@ function parseCustomTimestamp(timestamp: string): Date {
         Nov: "11",
         Dec: "12",
       };
+
       const month = monthMap[parts[1]];
       const day = parts[2].padStart(2, "0");
       const time = parts[3];
       const year = parts[5];
+
       return new Date(`${year}-${month}-${day} ${time}`);
     }
-    throw new Error("Invalid timestamp format");
+
+    // 3️⃣ If it's full ISO already (2025-11-13T13:10:24Z)
+    const d = new Date(timestamp);
+    if (!isNaN(d.getTime())) return d;
+
+    throw new Error("Unrecognized timestamp format");
   } catch (error) {
     console.error("Error parsing timestamp:", timestamp, error);
-    return new Date(); // Fallback to current date
+    return new Date();
   }
 }
+
+*/
 
 interface BatteryChartProps {
   data: BatteryData[];

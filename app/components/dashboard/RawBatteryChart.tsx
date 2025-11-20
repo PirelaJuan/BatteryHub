@@ -23,6 +23,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 function parseCustomTimestamp(timestamp: string): Date {
   try {
     const parts = timestamp.split(" ");
+
+    console.log("Parsing timestamp in RawBatteryChart: HEREEEEEEEEEEEEEEEEEE", parts);
+
     if (parts.length === 6) {
       const monthMap: { [key: string]: string } = {
         Jan: "01",
@@ -44,7 +47,7 @@ function parseCustomTimestamp(timestamp: string): Date {
       const year = parts[5];
       return new Date(`${year}-${month}-${day}T${time}`);
     }
-    throw new Error("Invalid timestamp format");
+    throw new Error("Invalid timestamp format for RawBatteryData");
   } catch (error) {
     console.error("Error parsing timestamp:", timestamp, error);
     return new Date(); // Fallback to current date

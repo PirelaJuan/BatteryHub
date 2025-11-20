@@ -9,17 +9,14 @@ import { BatteryChart } from '@/components/dashboard/BatteryChart';
 import { RawBatteryChart } from '@/components/dashboard/RawBatteryChart';
 import { BatteryStatusCards } from '@/components/dashboard/BatteryStatusCards';
 import { ControlToggleCard } from '@/components/dashboard/ControlToggleCard';
-import { 
-  generateFallbackData, 
-  generateRawFallbackData 
-} from '@/utils/dynamoDBService';
+
 import { useToast } from "@/hooks/use-toast";
 import type { BatteryData } from '@/types/battery';
 import type { RawBatteryData } from '@/utils/dynamoDBService';
 
 const fetchBatteryDataClient = async (): Promise<BatteryData[]> => {
   const res = await fetch("/api/battery");
-  console.log("Fetch response from /api/battery:", res);
+  
   if (!res.ok) {
     throw new Error("Failed to fetch battery data");
   }
@@ -47,7 +44,7 @@ const Dashboard = () => {
    
     queryKey: ['batteryData'],
     queryFn: fetchBatteryDataClient,
-    placeholderData: generateFallbackData(24),
+    placeholderData: [],
     meta: {
       onError: (error: Error) => {
         console.error("Failed to fetch battery metrics data:", error);
@@ -68,7 +65,7 @@ const Dashboard = () => {
   } = useQuery({
     queryKey: ['rawBatteryData'],
     queryFn: fetchRawBatteryDataClient,
-    placeholderData: generateRawFallbackData(24),
+    placeholderData: [],
     meta: {
       onError: (error: Error) => {
         console.error("Failed to fetch raw battery data:", error);

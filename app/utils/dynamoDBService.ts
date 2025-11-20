@@ -33,15 +33,16 @@ function parseCustomTimestamp(timestamp: string): Date {
       return new Date(timestamp);
     }
     
-    // Parse format like "Wed Apr 16 13:34:52 EDT 2025"
+    // Parse format like "Wed Apr 16 13:34:52 EST 2025"
     const parts = timestamp.split(' ');
+    //console.log("Parsing timestamp: HEREEEEEEEEE",  parts);
     if (parts.length >= 6) {
-      const day = parts[1];
-      const month = parts[2];
-      const date = parts[3];
-      const time = parts[4];
-      const tz = parts[5];
-      const year = parts[6].replace('.', '');
+      const day = parts[0];
+      const month = parts[1];
+      const date = parts[2];
+      const time = parts[3];
+      const tz = parts[4];
+      const year = parts[5];
       
       const monthMap: {[key: string]: string} = {
         'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
@@ -78,7 +79,7 @@ export async function fetchBatteryData(): Promise<BatteryData[]> {
       return [];
     }
 
-    console.log( response )
+    //console.log( response )
 
     // Map DynamoDB items to BatteryData format using the correct field names
     const batteryData: BatteryData[] = response.Items.map(item => ({
@@ -122,7 +123,7 @@ export async function fetchRawBatteryData(): Promise<RawBatteryData[]> {
 
     const response = await dbClient.send(command);
 
-    console.log("[fetchBatteryData] Scan response metadata:", response.$metadata);
+    //console.log("[fetchBatteryData] Scan response metadata:", response.$metadata);
     
     if (!response.Items || response.Items.length === 0) {
       console.warn("No raw data returned from DynamoDB");
@@ -168,6 +169,8 @@ export async function fetchRawBatteryData(): Promise<RawBatteryData[]> {
 }
 
 // Fallback function that generates mock data if DynamoDB fetch fails
+
+/*
 export const generateFallbackData = (points: number): BatteryData[] => {
   const now = new Date();
   // Generate historical data points
@@ -219,3 +222,4 @@ export const generateRawFallbackData = (points: number): RawBatteryData[] => {
     };
   });
 };
+*/
