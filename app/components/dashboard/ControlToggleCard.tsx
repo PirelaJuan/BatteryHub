@@ -1,3 +1,4 @@
+'use client';
 import * as React from 'react';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { dbClient } from '../../../config';
 
 
 export const ControlToggleCard = () => {
@@ -22,25 +24,7 @@ export const ControlToggleCard = () => {
     setIsSending(true);
 
     try {
-      const AWS_REGION = process.env.AWS_REGION;
-      const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-      const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
       
-      console.log("Initializing DynamoDB client...");
-
-      if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY) {
-        throw new Error("Missing AWS credentials in server environment");
-      }
-
-      const client = new DynamoDBClient({
-      region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-      }
-    });
-
-      const docClient = DynamoDBDocumentClient.from(client);
       console.log("DynamoDB client initialized successfully.");
 
       // Prepare the item to be saved
@@ -61,7 +45,7 @@ export const ControlToggleCard = () => {
 
       // Send the command to DynamoDB
       console.log("Sending command to DynamoDB...");
-      await docClient.send(command);
+      await dbClient.send(command);
       console.log("Command sent successfully.");
 
       toast({

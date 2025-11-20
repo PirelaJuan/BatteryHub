@@ -8,8 +8,7 @@ import { BatteryMetricsCards } from '@/components/dashboard/BatteryMetricsCards'
 import { BatteryChart } from '@/components/dashboard/BatteryChart';
 import { RawBatteryChart } from '@/components/dashboard/RawBatteryChart';
 import { BatteryStatusCards } from '@/components/dashboard/BatteryStatusCards';
-import { ControlToggleCard } from '@/components/dashboard/ControlToggleCard';
-
+//import { ControlToggleCard } from '@/components/dashboard/ControlToggleCard';
 import { useToast } from "@/hooks/use-toast";
 import type { BatteryData } from '@/types/battery';
 import type { RawBatteryData } from '@/utils/dynamoDBService';
@@ -109,9 +108,9 @@ const Dashboard = () => {
           <RawBatteryChart data={rawBatteryData || []} />
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-          <ControlToggleCard />
-        </div>
+         {/* <div className="grid grid-cols-1 gap-6">
+            <ControlToggleCard />
+          </div>*/}
       </div>
     </div>
   );
