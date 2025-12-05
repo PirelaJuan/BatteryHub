@@ -134,7 +134,7 @@ export const RawBatteryChart = ({ data }: RawBatteryChartProps) => {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Raw Battery Metrics</CardTitle>
-          <Popover>
+          {/*<Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -165,10 +165,10 @@ export const RawBatteryChart = ({ data }: RawBatteryChartProps) => {
                 numberOfMonths={2}
               />
             </PopoverContent>
-          </Popover>
+          </Popover>*/}
         </div>
 
-        <div className="flex flex-wrap gap-4 mt-2">
+        {/*<div className="flex flex-wrap gap-4 mt-2">
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Start Time:</label>
             <input
@@ -187,7 +187,7 @@ export const RawBatteryChart = ({ data }: RawBatteryChartProps) => {
               className="border rounded px-2 py-1 text-sm"
             />
           </div>
-        </div>
+        </div>*/}
 
         <div className="flex flex-wrap gap-4 mt-2">
           <div className="flex items-center space-x-2">

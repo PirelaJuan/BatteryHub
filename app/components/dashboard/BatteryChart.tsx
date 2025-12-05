@@ -129,13 +129,14 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
       [metric]: !prev[metric],
     }));
   };
-
+  
   const filteredData = useMemo(() => {
     if (!data.length) return [];
 
     let processedData = [...data];
 
     // Filter by date range
+    
     if (dateRange?.from) {
       const from = startOfDay(dateRange.from);
       const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
@@ -150,6 +151,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
         }
       });
     }
+
 
     // Filter by time range
     if (timeRange.start && timeRange.end) {
@@ -170,6 +172,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
         }
       });
     }
+      
 
     return processedData.map((item) => {
       let displayTime;
@@ -187,7 +190,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
       };
     });
   }, [data, dateRange, timeRange]);
-
+ 
   const maxScrollIndex = Math.max(0, filteredData.length - zoomLevel);
   const clampedScrollIndex = Math.min(scrollIndex, maxScrollIndex);
 
@@ -221,7 +224,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Battery Metrics Over Time</CardTitle>
-          <Popover>
+          {/*<Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -252,10 +255,10 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
                 numberOfMonths={2}
               />
             </PopoverContent>
-          </Popover>
+          </Popover>}*/}
         </div>
 
-        <div className="flex flex-wrap gap-4 mt-2">
+        {/*<div className="flex flex-wrap gap-4 mt-2">
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Start Time:</label>
             <input
@@ -274,7 +277,7 @@ export const BatteryChart = ({ data }: BatteryChartProps) => {
               className="border rounded px-2 py-1 text-sm"
             />
           </div>
-        </div>
+        </div>*/}
 
         <div className="flex justify-between mt-4">
           <Button
